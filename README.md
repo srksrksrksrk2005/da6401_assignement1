@@ -77,5 +77,7 @@ https://wandb.ai/ee23b067-indian-institute-of-technology-madras/DA6401_Assignmen
 https://wandb.ai/ee23b067-indian-institute-of-technology-madras/DA6401_Assignment1?nw=nwuseree23b067
 
 ## GIT HUB REPO
+https://github.com/srksrksrksrk2005/da6401_assignement1/tree/main
+
 
 
