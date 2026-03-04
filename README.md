@@ -73,8 +73,7 @@ python inference.py --model_path best_model.npy -d mnist --config_path best_conf
 
 ## 🚀 Weights & Biases report link
 
-https://wandb.ai/ee23b067-indian-institute-of-technology-madras/DA6401_Assignment1
-https://wandb.ai/ee23b067-indian-institute-of-technology-madras/DA6401_Assignment1?nw=nwuseree23b067
+https://wandb.ai/sadamrk2005-indian-institute-of-technology-madras/DA6401_assignement1/reportlist
 
 ## GIT HUB REPO
 https://github.com/srksrksrksrk2005/da6401_assignement1/tree/main
