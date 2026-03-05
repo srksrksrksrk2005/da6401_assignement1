@@ -92,7 +92,6 @@ def main():
     args = parse_arguments()
     _, _, X_test, y_test = load_data(args.dataset)
 
-    # Load trained weights
     weights = load_model(args.model_path)
     with open( args.config_path, "r") as f:
         config = json.load(f)
@@ -107,14 +106,11 @@ def main():
     args.weight_init = config["weight_init"]
     args.num_layers = config["num_layers"]
     args.batch_size = config["batch_size"]
-    args.learning_rate = config["learning_rate"]
     
-    args.optimizer = config["optimizer"]  # not needed for inference
-
+    args.optimizer = SGD(lr=config["learning_rate"])
     model = NeuralNetwork(args)
-
     model.set_weights(weights)
-    # Evaluate
+    
     results = evaluate_model(model, X_test, y_test)
     
     
