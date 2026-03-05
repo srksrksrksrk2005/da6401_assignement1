@@ -13,7 +13,8 @@ class ReLU:
     def backward(self, grad):
         dx = grad.copy()
         dx[self.output <= 0] = 0
-        return dx
+        return dx   
+        # return grad * (self.output >= 0).astype(grad.dtype)
 
 
 class Sigmoid:
