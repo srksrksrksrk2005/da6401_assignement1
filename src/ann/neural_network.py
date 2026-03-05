@@ -1,149 +1,108 @@
 """
-Main Neural Network Model class
-Handles forward and backward propagation loops
+Main Training Script
+Entry point for training neural networks with command-line arguments
 """
 
+import argparse
 from sklearn.metrics import f1_score
-from .neural_layer import Linear
-from .activations import ReLU, Sigmoid, Tanh
-from .objective_functions import Cross_Entropy, MSE
-import numpy as np
 import wandb
-
-class NeuralNetwork:
+import numpy as np
+from utils.data_loader import load_data
+from ann.neural_network import NeuralNetwork
+from ann.optimizers import SGD, RMSProp, Momentum, NAG
+import json
+def parse_arguments():
+    
+    parser = argparse.ArgumentParser(description='Train a neural network')
     """
-        Main model class that orchestrates the neural network training and inference.
+    Parse command-line arguments.
+    
+    TODO: Implement argparse with the following arguments:
+    - dataset: 'mnist' or 'fashion_mnist'
+    - epochs: Number of training epochs
+    - batch_size: Mini-batch size
+    - learning_rate: Learning rate for optimizer
+    - optimizer: 'sgd', 'momentum', 'nag', 'rmsprop'
+    - hidden_layers: List of hidden layer sizes
+    - num_neurons: Number of neurons in hidden layers
+    - activation: Activation function ('relu', 'sigmoid', 'tanh')
+    - loss: Loss function ('cross_entropy', 'mse')
+    - weight_init: Weight initialization method
+    - wandb_project: W&B project name
+    - model_save_path: Path to save trained model (do not give absolute path, rather provide relative path)
     """
-
-    def __init__(self, cli_args):
-        self.layers = []
-        input_size = 784
-        output_size = 10
-        
-        hidden_sizes = cli_args.hidden_size  
-        activation_name = cli_args.activation
-        weight_init = cli_args.weight_init
-        
-        activations = {
-            "relu": ReLU,
-            "sigmoid": Sigmoid,
-            "tanh": Tanh
-        }   
-        activation_class = activations[activation_name]
-
-        prev_size = input_size
-        
-        for h in hidden_sizes:
-            self.layers.append(Linear(prev_size, h,weight_init))
-            self.layers.append(activation_class())
-            prev_size = h
-
-        self.layers.append(Linear(prev_size, output_size, weight_init))
-
-        self.loss = Cross_Entropy() if cli_args.loss.lower() == "cross_entropy" else MSE()
-        
-        self.optimizer = cli_args.optimizer
-        
-    def get_weights(self):
-        d = {}
-        lin_idx = 0
-        for layer in self.layers:
-            if hasattr(layer, "W"):
-                d[f"W{lin_idx}"] = layer.W.copy()
-                d[f"b{lin_idx}"] = layer.b.copy()
-                lin_idx += 1
-        return d
-
-    def set_weights(self, weights_list):
-        lin_idx = 0
-        for layer in self.layers:   
-            if hasattr(layer, "W"):
-                layer.W = weights_list[f"W{lin_idx}"].copy()
-                layer.b = weights_list[f"b{lin_idx}"].copy()
-                lin_idx += 1
-                
-    def forward(self, X):
-        """
-            Forward propagation through all layers.
-            Returns logits (no softmax applied)
-            X is shape (b, D_in) and output is shape (b, D_out).
-            b is batch size, D_in is input dimension, D_out is output dimension.
-        """
-        logits = X
-        for layer in self.layers:
-            logits = layer.forward(logits)
-        return logits
+    parser.add_argument("-d", "--dataset", choices=["mnist", "fashion_mnist"], required=True)
+    parser.add_argument("-e", "--epochs", type=int, required=True)
+    parser.add_argument("-b", "--batch_size", type=int, required=True, default=128)
+    parser.add_argument("-l", "--loss", choices=["cross_entropy", "MSE"], required=True)
+    parser.add_argument("-o", "--optimizer", choices=["sgd", "momentum", "nag", "rmsprop"], required=True)
+    parser.add_argument("-lr", "--learning_rate", type=float, required=True)
+    parser.add_argument("-wd", "--weight_decay", type=float, default=0.0)
+    parser.add_argument("-nhl", "--num_layers", type=int, required=True)
+    parser.add_argument("-sz", "--hidden_size", nargs="+", type=int, required=True)
+    parser.add_argument("-a", "--activation", choices=["relu", "sigmoid", "tanh"], required=True)
+    parser.add_argument("-w_i", "--weight_init", choices=["random", "xavier"], required=True)
+    parser.add_argument("-w_p", "--wandb_project", default="DA6401_assignement1")
     
-    def backward(self, y_true, y_pred):
-        """
-            Backward propagation to compute gradients.
-            Returns two numpy arrays: grad_Ws, grad_bs.
-            - `grad_Ws[0]` is gradient for the last (output) layer weights,
-            `grad_bs[0]` is gradient for the last layer biases, and so on.
-        """
-        grad = self.loss.backward(y_pred, y_true)
+    return parser.parse_args()
 
-        grad_W_list = []
-        grad_b_list = []
 
-        for layer in reversed(self.layers): # Backprop through layers in reverse; collect grads so that index 0 = last layer
-            grad = layer.backward(grad)
-            if hasattr(layer, "W"):
-                grad_W_list.append(layer.grad_W)
-                grad_b_list.append(layer.grad_b)
-                
-        self.grad_W = np.empty(len(grad_W_list), dtype=object)
-        self.grad_b = np.empty(len(grad_b_list), dtype=object)
-
-        for i, (gw, gb) in enumerate(zip(grad_W_list, grad_b_list)):
-            self.grad_W[i] = gw
-            self.grad_b[i] = gb
-
+def main():
+    """
+    Main training function.
+    """
+    best_f1 = -1
+    args = parse_arguments()
+    if args.num_layers != len(args.hidden_size):
+        raise ValueError("num_layers must match length of hidden_size list")
+    
+    X_train, y_train, X_test, y_test = load_data(args.dataset)
             
-        return self.grad_W, self.grad_b
-
-    def update_weights(self):
-        self.optimizer.step(self.layers)
-
-    
-    def train(self, X_train, y_train, epochs, batch_size):
-        n_samples = X_train.shape[0]
-        iteration = 0
-        for epoch in range(epochs):
-            
-            indices = np.random.permutation(n_samples)
-            X_train = X_train[indices]
-            y_train = y_train[indices]
-
-            epoch_loss = 0
-            for i in range(0, n_samples, batch_size):
-                X_batch = X_train[i:i+batch_size]
-                y_batch = y_train[i:i+batch_size]
-                
-                logits  = self.forward(X_batch)
-                
-                loss = self.loss.forward(logits , y_batch)
-                epoch_loss += loss
-                
-                self.backward(y_batch, logits)
-                self.optimizer.step(self.layers)
-                iteration += 1  
-            avg_loss = epoch_loss /  int(np.ceil(n_samples / batch_size))
-            print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
-            train_acc = self.evaluate(X_train[:5000], y_train[:5000])[0]
-        return train_acc ,f1_score(y_train[:5000].argmax(axis=1), self.forward(X_train[:5000]).argmax(axis=1), average='macro')
-    
-    
-    def evaluate(self, X, y):
+    if args.optimizer == "sgd":
+        optimizer = SGD(lr=args.learning_rate,weight_decay=args.weight_decay)
+    elif args.optimizer == "rmsprop":
+        optimizer = RMSProp(lr=args.learning_rate,weight_decay=args.weight_decay)
+    elif args.optimizer == "momentum":
+        optimizer = Momentum(lr=args.learning_rate,weight_decay=args.weight_decay)
+    elif args.optimizer == "nag":
+        optimizer = NAG(lr=args.learning_rate,weight_decay=args.weight_decay)
+    else:
+        raise ValueError(f"Unknown optimizer: {args.optimizer}")
         
-        logits  = self.forward(X)
+    args.optimizer = optimizer
+    args.hidden_size = args.hidden_size
+    args.hidden_sizes = args.hidden_size if hasattr(args,"hidden_size") else args.sz
+    model = NeuralNetwork(args)
+    print("Starting training...")
+    model.train(X_train, y_train, args.epochs, args.batch_size)
+    y_train_labels = np.argmax(y_train, axis=1)  # Convert one-hot to class labels
 
-        exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-        probs = exp / np.sum(exp, axis=1, keepdims=True)
+    train_acc, train_f1 = model.evaluate(X_train, y_train)
+    test_acc, test_f1 = model.evaluate(X_test, y_test)
+    if test_f1 > best_f1:
+        best_f1 = test_f1
 
-        predictions = np.argmax(probs, axis=1)
-        true_labels = np.argmax(y, axis=1)
+        model_data = {
+            "weights": model.get_weights(),
+            "config": {
+                "hidden_size": args.hidden_size,
+                "activation": args.activation,
+                "loss": args.loss,
+                "weight_init": args.weight_init,
+                "optimizer": args.optimizer.__class__.__name__.lower(),
+                "learning_rate": args.learning_rate,
+                "num_layers": args.num_layers,
+                "batch_size": args.batch_size,
+            }
+        }
+        np.save("best_model.npy", model_data["weights"])
 
-        accuracy = np.mean(predictions == true_labels)
+        with open("best_config.json", "w") as f:
+            json.dump(model_data["config"], f)
 
-        return accuracy ,f1_score(true_labels, predictions, average='macro')
+      
+    print("Training complete!")
+
+
+if __name__ == '__main__':
+    main()
