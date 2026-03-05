@@ -174,9 +174,14 @@ def main():
                 "hidden_size": args.hidden_size,
                 "activation": args.activation,
                 "loss": args.loss,
-                "weight_init": args.weight_init
+                "weight_init": args.weight_init,
+                "optimizer": args.optimizer,
+                "learning_rate": args.learning_rate,
+                "weight_decay": args.weight_decay,
+                "num_layers": args.num_layers,
+                "batch_size": args.batch_size,
             }
-        }
+        
 
         np.save("best_model.npy", model_data["weights"])
 
