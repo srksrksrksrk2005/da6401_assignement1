@@ -18,7 +18,7 @@ class NeuralNetwork:
     def __init__(self, cli_args):
         self.layers = []
         input_size = 784
-        output_size = getattr(cli_args, "num_classes", 10)
+        output_size = (getattr(cli_args, "num_classes", 10))
         # Read hidden layer sizes safely
         if hasattr(cli_args, "hidden_size"):
             hidden_sizes = cli_args.hidden_size
@@ -103,9 +103,12 @@ class NeuralNetwork:
                 grad_W_list.append(layer.grad_W)
                 grad_b_list.append(layer.grad_b)
 
-        self.grad_W = np.array(grad_W_list, dtype=object)
-        self.grad_b = np.array(grad_b_list, dtype=object)
+        self.grad_W = np.empty(len(grad_W_list), dtype=object)
+        self.grad_b = np.empty(len(grad_b_list), dtype=object)
 
+        for i in range(len(grad_W_list)):
+            self.grad_W[i] = grad_W_list[i]
+            self.grad_b[i] = grad_b_list[i]
         return self.grad_W, self.grad_b
 
     def update_weights(self):
