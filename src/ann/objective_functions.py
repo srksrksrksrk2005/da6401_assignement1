@@ -18,7 +18,7 @@ class Cross_Entropy:
         return loss
     def backward(self, y_pred=None, y_true=None):
 
-        return (self.y_pred - self.y_true)
+        return (y_pred - y_true)
 
 
 
