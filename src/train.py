@@ -31,108 +31,18 @@ def parse_arguments():
     - wandb_project: W&B project name
     - model_save_path: Path to save trained model (do not give absolute path, rather provide relative path)
     """
-    
-    parser.add_argument(
-        '-d', '--dataset',
-        type=str,
-        required=True,
-        default="mnist",
-        choices=['mnist', 'fashion_mnist']
-    )
-    
-    
-    parser.add_argument(
-        '-e', '--epochs',
-        type=int,
-        default=20,
-        required=True
-    )
-    
-    parser.add_argument(
-        '-b', '--batch_size',
-        type=int,
-        required=True,
-        default=64
-    )
-    parser.add_argument(
-        '-l', '--loss', 
-        type=str, 
-        required=True,
-        default="cross_entropy",
-        choices=['cross_entropy', 'mse']
-    )
-    parser.add_argument(
-        '-o', '--optimizer',
-        type=str,
-        required=True,
-        default="sgd",  
-        choices=['sgd', 'momentum', 'nag', 'rmsprop']
-    )
-    
-    parser.add_argument(
-        '-lr', '--learning_rate',
-        type=float,
-        default=0.001,
-        required=True
-    )
-    
-    parser.add_argument(
-        '-wd', '--weight_decay',
-        type=float,
-        default=0.0
-    )
-    
-    parser.add_argument(
-        '-nhl', '--num_layers',
-        type=int,
-        default=2,
-        required=True
-    )
-
-    parser.add_argument(
-        '-sz', '--hidden_size',
-        type=int,
-        nargs='+',
-        default=[128, 64],
-        required=True
-    )
-    
-    parser.add_argument(
-        '-a', '--activation',
-        type=str,
-        required=True,
-        default="relu",
-        choices=['relu', 'sigmoid', 'tanh']
-    )
-    
-    parser.add_argument(
-        '-w_i', '--weight_init',
-        type=str,
-        required=True,
-        default="xavier",
-        choices=['zeros', 'xavier'],
-        help="Weight initialization method"
-    )
-
-    parser.add_argument(
-        '-w_p', '--wandb_project',
-        type=str,
-        default="DA6401_assignement1",
-    )
-    
-    parser.add_argument(
-        '--model_path',
-        type=str,
-        default="best_model.npy",
-        help="Relative path to save trained model"
-    )
-    
-    parser.add_argument(
-        '--config_path', 
-        type=str, 
-        default='best_config.json', 
-        help='relative path for saving config (json)'
-    )
+    parser.add_argument("-d", "--dataset", choices=["mnist", "fashion_mnist"], required=True)
+    parser.add_argument("-e", "--epochs", type=int, required=True)
+    parser.add_argument("-b", "--batch_size", type=int, required=True, default=128)
+    parser.add_argument("-l", "--loss", choices=["cross_entropy", "MSE"], required=True)
+    parser.add_argument("-o", "--optimizer", choices=["sgd", "momentum", "nag", "rmsprop"], required=True)
+    parser.add_argument("-lr", "--learning_rate", type=float, required=True)
+    parser.add_argument("-wd", "--weight_decay", type=float, default=0.0)
+    parser.add_argument("-nhl", "--num_layers", type=int, required=True)
+    parser.add_argument("-sz", "--hidden_size", nargs="+", type=int, required=True)
+    parser.add_argument("-a", "--activation", choices=["relu", "sigmoid", "tanh"], required=True)
+    parser.add_argument("-w_i", "--weight_init", choices=["random", "xavier"], required=True)
+    parser.add_argument("-w_p", "--wandb_project", default="DA6401_assignement1")
     
     return parser.parse_args()
 
@@ -161,7 +71,7 @@ def main():
         
     args.optimizer = optimizer
     args.hidden_size = args.hidden_size
-    
+    args.hidden_sizes = args.hidden_size if hasattr(args,"hidden_size") else args.sz
     model = NeuralNetwork(args)
     print("Starting training...")
     model.train(X_train, y_train, args.epochs, args.batch_size)
