@@ -11,7 +11,9 @@ class ReLU:
         return self.output
 
     def backward(self, grad):
-        return grad * (self.output >= 0).astype(grad.dtype)
+        dx = grad.copy()
+        dx[self.output <= 0] = 0
+        return dx
 
 
 class Sigmoid:
