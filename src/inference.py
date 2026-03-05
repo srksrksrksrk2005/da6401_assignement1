@@ -105,7 +105,11 @@ def main():
     args.activation = config["activation"]
     args.loss = config["loss"]
     args.weight_init = config["weight_init"]
-    args.optimizer = SGD(lr=0.001)  # not needed for inference
+    args.num_layers = config["num_layers"]
+    args.batch_size = config["batch_size"]
+    args.learning_rate = config["learning_rate"]
+    
+    args.optimizer = config["optimizer"]  # not needed for inference
 
     model = NeuralNetwork(args)
 
