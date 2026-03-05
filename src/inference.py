@@ -13,31 +13,17 @@ import json
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run inference on test set')
+    parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "-d","--dataset",
-        type=str,
-        choices=["mnist","fashion_mnist"],
-        required=True
-    )
+    parser.add_argument("-d","--dataset",
+    choices=["mnist","fashion_mnist"],
+    required=True)
 
-    parser.add_argument(
-        "--model_path",
-        type=str,
-        required=True
-    )
+    parser.add_argument("--model_path", required=True)
 
-    parser.add_argument(
-        "--config_path",
-        type=str,
-        required=True
-    )
+    parser.add_argument("--config_path", required=True)
 
-    parser.add_argument(
-        "-b","--batch_size",
-        type=int,
-        default=128
-    )
+    parser.add_argument("-b","--batch_size", type=int, default=128)
     return parser.parse_args()
 
 
