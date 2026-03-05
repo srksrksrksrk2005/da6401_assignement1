@@ -13,10 +13,33 @@ import json
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run inference on test set')
-    parser.add_argument("-d","--dataset", choices=["mnist","fashion_mnist"], required=True)
-    parser.add_argument("-b","--batch_size", type=int, default=128)
 
+    parser.add_argument(
+        "-d","--dataset",
+        type=str,
+        choices=["mnist","fashion_mnist"],
+        required=True
+    )
+
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        required=True
+    )
+
+    parser.add_argument(
+        "--config_path",
+        type=str,
+        required=True
+    )
+
+    parser.add_argument(
+        "-b","--batch_size",
+        type=int,
+        default=128
+    )
     return parser.parse_args()
+
 
 def load_model(model_path):
     """
@@ -65,38 +88,46 @@ def main():
     TODO: Must return Dictionary - logits, loss, accuracy, f1, precision, recall
     """
     args = parse_arguments()
+
+    # Load dataset
     _, _, X_test, y_test = load_data(args.dataset)
 
-    # Load trained weights
-    weights = (load_model('best_model.npy'))
-    with open( 'best_config.json', "r") as f:
+    # Load saved weights (expected to be a dict of W0,b0,...)
+    weights = load_model(args.model_path)
+
+    # Load config JSON (dictionary with keys: hidden_size, activation, loss, weight_init, etc.)
+    with open(args.config_path, "r") as f:
         config = json.load(f)
 
+    # Build a small cli-like object expected by NeuralNetwork
     class DummyArgs:
         pass
 
-    args = DummyArgs()
-    args.hidden_size = config["hidden_size"]
-    args.activation = config["activation"]
-    args.loss = config["loss"]
-    args.weight_init = config["weight_init"]
-    args.num_layers = config["num_layers"]
-    args.batch_size = config["batch_size"]
-    
-    args.optimizer = SGD(lr=config["learning_rate"])
-    model = NeuralNetwork(args)
+    cli = DummyArgs()
+    # map config keys to the cli object used by NeuralNetwork
+    # Accept both 'hidden_size' or maybe 'hidden_sizes' inside config
+    cli.hidden_size = config.get("hidden_size", config.get("hidden_sizes", config.get("sz", [])))
+    cli.activation = config.get("activation", "relu")
+    cli.loss = config.get("loss", "cross_entropy")
+    cli.weight_init = config.get("weight_init", "random")
+    cli.num_layers = config.get("num_layers", len(cli.hidden_size) if cli.hidden_size else 0)
+    cli.batch_size = config.get("batch_size", args.batch_size)
+    # optimizer not needed for inference, but NeuralNetwork expects an attribute
+    cli.optimizer = None
+
+    # Initialize model and set weights
+    model = NeuralNetwork(cli)
     model.set_weights(weights)
+
     # Evaluate
     results = evaluate_model(model, X_test, y_test)
-    
-    
+
     print("Evaluation Results:")
     print(f"Loss: {results['loss']:.4f}")
     print(f"Accuracy: {results['accuracy']:.4f}")
     print(f"Precision: {results['precision']:.4f}")
     print(f"Recall: {results['recall']:.4f}")
-    print(f"F1 Score: {results['f1']:.4f}")
-
+    print(f"F1 Score: {results['f1']:.4f}") 
     print("Evaluation complete!")
     return results
 
