@@ -110,11 +110,15 @@ def parse_arguments():
         type=str,
         required=True,
         default="xavier",
-        choices=['random', 'xavier'],
+        choices=['zeros', 'xavier'],
         help="Weight initialization method"
     )
 
-    
+    parser.add_argument(
+        '-w_p', '--wandb_project',
+        type=str,
+        default="DA6401_assignement1",
+    )
     
     parser.add_argument(
         '--model_path',
@@ -139,7 +143,6 @@ def main():
     """
     best_f1 = -1
     args = parse_arguments()
-    
     if args.num_layers != len(args.hidden_size):
         raise ValueError("num_layers must match length of hidden_size list")
     
@@ -160,9 +163,10 @@ def main():
     args.hidden_size = args.hidden_size
     
     model = NeuralNetwork(args)
-
+    print("Starting training...")
     model.train(X_train, y_train, args.epochs, args.batch_size)
-    
+    y_train_labels = np.argmax(y_train, axis=1)  # Convert one-hot to class labels
+
     train_acc, train_f1 = model.evaluate(X_train, y_train)
     test_acc, test_f1 = model.evaluate(X_test, y_test)
     if test_f1 > best_f1:
@@ -175,18 +179,16 @@ def main():
                 "activation": args.activation,
                 "loss": args.loss,
                 "weight_init": args.weight_init,
-                "optimizer": args.optimizer,
+                "optimizer": args.optimizer.__class__.__name__.lower(),
                 "learning_rate": args.learning_rate,
-                "weight_decay": args.weight_decay,
                 "num_layers": args.num_layers,
                 "batch_size": args.batch_size,
             }
-        
-
+        }
         np.save("best_model.npy", model_data["weights"])
 
         with open("best_config.json", "w") as f:
-            json.dump(model_data["config"], f, indent=2)
+            json.dump(model_data["config"], f)
 
       
     print("Training complete!")
