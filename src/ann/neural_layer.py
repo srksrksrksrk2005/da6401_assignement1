@@ -16,7 +16,7 @@ class Linear:
             self.W = np.random.uniform(-limit, limit, (input_size, output_size))
         else:
             self.W = np.random.randn(input_size, output_size) * 0.01
-            
+
         self.b = np.zeros((1,output_size))
         
     def forward(self,input):
