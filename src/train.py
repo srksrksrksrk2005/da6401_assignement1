@@ -39,7 +39,7 @@ def parse_arguments():
     parser.add_argument("-lr", "--learning_rate", type=float, required=True)
     parser.add_argument("-wd", "--weight_decay", type=float, default=0.0)
     parser.add_argument("-nhl", "--num_layers", type=int, required=True)
-    parser.add_argument("-sz", "--hidden_size", nargs="+", required=True)
+    parser.add_argument("-sz", "--hidden_size", nargs="+", type=int, required=True)
     parser.add_argument("-a", "--activation", choices=["relu", "sigmoid", "tanh"], required=True)
     parser.add_argument("-w_i", "--weight_init", choices=["random", "xavier"], required=True)
     parser.add_argument("-w_p", "--wandb_project", default="DA6401_assignement1")
