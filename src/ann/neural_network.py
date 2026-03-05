@@ -18,7 +18,7 @@ class NeuralNetwork:
     def __init__(self, cli_args):
         self.layers = []
         input_size = 784
-        output_size = 10
+        output_size = getattr(cli_args, "num_classes", 10)
         # Read hidden layer sizes safely
         if hasattr(cli_args, "hidden_size"):
             hidden_sizes = cli_args.hidden_size
@@ -91,8 +91,7 @@ class NeuralNetwork:
             - `grad_Ws[0]` is gradient for the last (output) layer weights,
             `grad_bs[0]` is gradient for the last layer biases, and so on.
         """
-        grad = self.loss.backward(y_pred, y_true)
-
+        grad = self.loss.backward()
         grad_W_list = []
         grad_b_list = []
 
