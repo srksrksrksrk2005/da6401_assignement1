@@ -36,6 +36,7 @@ def parse_arguments():
     parser.add_argument(
         "--config_path",
         type=str,
+        default="best_config.json",
         required=True,
         help="Path to best_config.json"
     )
