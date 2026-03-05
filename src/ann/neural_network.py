@@ -96,20 +96,17 @@ class NeuralNetwork:
         grad_W_list = []
         grad_b_list = []
 
-        for layer in reversed(self.layers): # Backprop through layers in reverse; collect grads so that index 0 = last layer
+        for layer in reversed(self.layers):
+
             grad = layer.backward(grad)
-            if hasattr(layer, "W"):
+
+            if hasattr(layer, "grad_W"):
                 grad_W_list.append(layer.grad_W)
                 grad_b_list.append(layer.grad_b)
-                
-        self.grad_W = np.empty(len(grad_W_list), dtype=object)
-        self.grad_b = np.empty(len(grad_b_list), dtype=object)
 
-        for i, (gw, gb) in enumerate(zip(grad_W_list, grad_b_list)):
-            self.grad_W[i] = gw
-            self.grad_b[i] = gb
+        self.grad_W = np.array(grad_W_list, dtype=object)
+        self.grad_b = np.array(grad_b_list, dtype=object)
 
-            
         return self.grad_W, self.grad_b
 
     def update_weights(self):
