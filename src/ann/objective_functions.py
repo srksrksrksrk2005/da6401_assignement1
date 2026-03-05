@@ -3,26 +3,25 @@ Loss/Objective Functions and Their Derivatives
 Implements: Cross-Entropy, Mean Squared Error (MSE)
 """
 import numpy as np
-
-
 class Cross_Entropy:
 
     def __init__(self):
-        self.probs = None
+        self.y_pred = None
         self.y_true = None
 
     def forward(self, logits, y_true):
 
         exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-        self.probs = exp / np.sum(exp, axis=1, keepdims=True)
-
+        self.y_pred = exp / np.sum(exp, axis=1, keepdims=True)
         self.y_true = y_true
 
-        loss = -np.sum(y_true * np.log(self.probs + 1e-8)) / logits.shape[0]
+        loss = -np.sum(y_true * np.log(self.y_pred + 1e-8)) / y_true.shape[0]
         return loss
 
     def backward(self):
-        return (self.probs - self.y_true) 
+
+        batch_size = self.y_true.shape[0]
+        return (self.y_pred - self.y_true)
 
 class MSE:
     def __init__(self):
