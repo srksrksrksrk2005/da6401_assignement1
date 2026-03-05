@@ -16,9 +16,9 @@ class Cross_Entropy:
         
         loss = -np.sum(y_true * np.log(self.y_pred + 1e-8)) / y_true.shape[0]
         return loss
+    def backward(self, y_pred=None, y_true=None):
 
-    def backward(self,y_pred, y_true):
-        return (self.y_pred - self.y_true) 
+        return (self.y_pred - self.y_true)
 
 
 
