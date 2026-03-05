@@ -39,7 +39,7 @@ def parse_arguments():
     parser.add_argument("-lr", "--learning_rate", type=float, required=True)
     parser.add_argument("-wd", "--weight_decay", type=float, default=0.0)
     parser.add_argument("-nhl", "--num_layers", type=int, required=True)
-    parser.add_argument("-sz", "--hidden_size", nargs="+", type=int, required=True)
+    parser.add_argument("-sz", "--hidden_size", nargs="+", required=True)
     parser.add_argument("-a", "--activation", choices=["relu", "sigmoid", "tanh"], required=True)
     parser.add_argument("-w_i", "--weight_init", choices=["random", "xavier"], required=True)
     parser.add_argument("-w_p", "--wandb_project", default="DA6401_assignement1")
@@ -81,7 +81,6 @@ def main():
     test_acc, test_f1 = model.evaluate(X_test, y_test)
     if test_f1 > best_f1:
         best_f1 = test_f1
-
         model_data = {
             "weights": model.get_weights(),
             "config": {
@@ -89,10 +88,10 @@ def main():
                 "activation": args.activation,
                 "loss": args.loss,
                 "weight_init": args.weight_init,
-                "optimizer": args.optimizer.__class__.__name__.lower(),
+                "optimizer": args.optimizer.__class__.__name__ if args.optimizer is not None else None,
                 "learning_rate": args.learning_rate,
                 "num_layers": args.num_layers,
-                "batch_size": args.batch_size,
+                "batch_size": args.batch_size
             }
         }
         np.save("best_model.npy", model_data["weights"])
