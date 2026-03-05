@@ -127,11 +127,9 @@ class NeuralNetwork:
                 
                 self.backward(y_batch, logits)
                 self.optimizer.step(self.layers)
-                
-                
+                iteration += 1  
             avg_loss = epoch_loss /  int(np.ceil(n_samples / batch_size))
             print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
-            
             train_acc = self.evaluate(X_train[:5000], y_train[:5000])[0]
         return train_acc ,f1_score(y_train[:5000].argmax(axis=1), self.forward(X_train[:5000]).argmax(axis=1), average='macro')
     
