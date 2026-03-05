@@ -13,33 +13,8 @@ import json
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run inference on test set')
-    parser.add_argument(
-        '--model_path',
-        type=str,
-        required=True,
-        help="Relative path to saved model weights (.npy)"
-    )
-
-    parser.add_argument(
-        '-d', '--dataset',
-        type=str,
-        required=True,
-        default="mnist",
-        choices=['mnist', 'fashion_mnist']
-    )
-
-    parser.add_argument(
-        '-b', '--batch_size',
-        type=int,
-        default=64
-    )
-    parser.add_argument(
-        "--config_path",
-        type=str,
-        default="best_config.json",
-        required=True,
-        help="Path to best_config.json"
-    )
+    parser.add_argument("-d","--dataset", choices=["mnist","fashion_mnist"], required=True)
+    parser.add_argument("-b","--batch_size", type=int, default=128)
 
     return parser.parse_args()
 
@@ -93,8 +68,8 @@ def main():
     _, _, X_test, y_test = load_data(args.dataset)
 
     # Load trained weights
-    weights = load_model(args.model_path)
-    with open( args.config_path, "r") as f:
+    weights = (load_model('best_model.npy'))
+    with open( 'best_config.json', "r") as f:
         config = json.load(f)
 
     class DummyArgs:
