@@ -19,11 +19,21 @@ class NeuralNetwork:
         self.layers = []
         input_size = 784
         output_size = 10
-        
-        hidden_size = cli_args.hidden_size  
-        activation_name = cli_args.activation
-        weight_init = cli_args.weight_init
-        
+        # Read hidden layer sizes safely
+        if hasattr(cli_args, "hidden_size"):
+            hidden_sizes = cli_args.hidden_size
+        elif hasattr(cli_args, "hidden_sizes"):
+            hidden_sizes = cli_args.hidden_sizes
+        elif hasattr(cli_args, "sz"):
+            hidden_sizes = cli_args.sz
+        elif hasattr(cli_args, "hidden_layer_size"):
+            hidden_sizes = cli_args.hidden_layer_size
+        else:
+            hidden_sizes = []
+        if isinstance(hidden_sizes, int):
+            hidden_sizes = [hidden_sizes]
+        activation_name = getattr(cli_args, "activation", "relu")
+        weight_init = getattr(cli_args, "weight_init", "random")
         activations = {
             "relu": ReLU,
             "sigmoid": Sigmoid,
@@ -33,7 +43,7 @@ class NeuralNetwork:
 
         prev_size = input_size
         
-        for h in hidden_size:
+        for h in hidden_sizes:
             self.layers.append(Linear(prev_size, h,weight_init))
             self.layers.append(activation_class())
             prev_size = h
