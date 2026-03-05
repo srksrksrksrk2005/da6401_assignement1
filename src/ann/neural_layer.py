@@ -16,14 +16,10 @@ class Linear:
             self.W = np.random.uniform(-limit, limit, (input_size, output_size))
         else:
             self.W = np.random.randn(input_size, output_size) * 0.01
-
-        self.b = np.zeros((1,output_size))
-        
-    def forward(self,input):
-        self.input = input
-        y = np.dot(input,self.W) + self.b
-        return y
-    
+        self.b = np.zeros((1, output_size))
+    def forward(self, X):
+        self.input = X
+        return X @ self.W + self.b
     def backward(self,grad):
         batch_size = self.input.shape[0]
 
