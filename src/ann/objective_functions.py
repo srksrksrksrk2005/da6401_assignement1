@@ -21,16 +21,23 @@ class Cross_Entropy:
     def backward(self):
 
         batch_size = self.y_true.shape[0]
-        return (self.y_pred - self.y_true)
+        return (self.y_pred - self.y_true)/ batch_size
 
 class MSE:
+
     def __init__(self):
         self.y_pred = None
         self.y_true = None
+
     def forward(self, y_pred, y_true):
+
         self.y_pred = y_pred
         self.y_true = y_true
-        return np.mean((y_pred - y_true) ** 2)
+
+        return np.mean((y_pred - y_true)**2)
 
     def backward(self):
-        return 2.0 * (self.y_pred - self.y_true) / self.y_true.shape[1]
+
+        batch = self.y_true.shape[0]
+
+        return 2*(self.y_pred - self.y_true)/(batch*self.y_true.shape[1])
