@@ -27,7 +27,7 @@ class Cross_Entropy:
 
         batch = self.y_true.shape[0]
 
-        return (self.y_pred - self.y_true) / batch
+        return (self.y_pred - self.y_true) 
 
 
 class MSE:
