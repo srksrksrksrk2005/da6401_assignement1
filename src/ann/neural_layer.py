@@ -31,10 +31,10 @@ class Linear:
     def backward(self, grad):
 
         # gradients w.r.t weights
-        self.grad_W = (self.input.T @ grad)/ self.input.shape[0]  
+        self.grad_W = (self.input.T @ grad)
 
         # gradients w.r.t bias
-        self.grad_b = np.sum(grad, axis=0, keepdims=True)/ self.input.shape[0]  
+        self.grad_b = np.sum(grad, axis=0, keepdims=True)
 
         # gradient to previous layer
         dX = grad @ self.W.T
