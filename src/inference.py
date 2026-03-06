@@ -9,20 +9,45 @@ from utils.data_loader import load_data
 from ann.neural_network import NeuralNetwork
 from ann.optimizers import SGD
 import json
+def parse_arguments(args_list=None):
+    parser = argparse.ArgumentParser(description="Run inference on test set")
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Run inference on test set')
+    parser.add_argument(
+        "-d", "--dataset",
+        choices=["mnist", "fashion_mnist"],
+        required=True
+    )
 
-    parser.add_argument("-d","--dataset",
-    choices=["mnist","fashion_mnist"],
-    required=True)
+    parser.add_argument(
+        "--model_path",
+        required=True
+    )
 
-    parser.add_argument("--model_path", required=True)
+    parser.add_argument(
+        "--config_path",
+        required=True
+    )
 
-    parser.add_argument("--config_path", required=True)
+    parser.add_argument(
+        "-b", "--batch_size",
+        type=int,
+        default=128
+    )
 
-    parser.add_argument("-b","--batch_size", type=int, default=128)
-    return parser.parse_args()
+    return parser.parse_args(args_list)
+# def parse_arguments():
+#     parser = argparse.ArgumentParser(description='Run inference on test set')
+
+#     parser.add_argument("-d","--dataset",
+#     choices=["mnist","fashion_mnist"],
+#     required=True)
+
+#     parser.add_argument("--model_path", required=True)
+
+#     parser.add_argument("--config_path", required=True)
+
+#     parser.add_argument("-b","--batch_size", type=int, default=128)
+#     return parser.parse_args()
 
 
 def load_model(model_path):
@@ -65,13 +90,14 @@ def evaluate_model(model, X_test, y_test):
 
 
 
-def main():
+def main(args=None):
     """
     Main inference function.
     
     TODO: Must return Dictionary - logits, loss, accuracy, f1, precision, recall
     """
-    args = parse_arguments()
+    if args is None:
+        args = parse_arguments()
 
     # Load dataset
     _, _, X_test, y_test = load_data(args.dataset)
