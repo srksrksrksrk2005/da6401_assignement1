@@ -5,7 +5,6 @@ Evaluate trained models on test sets
 import argparse
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score ,confusion_matrix
-import wandb
 from utils.data_loader import load_data
 from ann.neural_network import NeuralNetwork
 from ann.optimizers import SGD
@@ -13,7 +12,6 @@ import json
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run inference on test set')
-    parser = argparse.ArgumentParser()
 
     parser.add_argument("-d","--dataset",
     choices=["mnist","fashion_mnist"],
@@ -92,7 +90,10 @@ def main():
     cli = DummyArgs()
     # map config keys to the cli object used by NeuralNetwork
     # Accept both 'hidden_size' or maybe 'hidden_sizes' inside config
-    cli.hidden_size = config.get("hidden_size", config.get("hidden_sizes", config.get("sz", [])))
+    hidden = config.get("hidden_size", config.get("hidden_sizes", config.get("sz", [])))
+    if isinstance(hidden, int):
+        hidden = [hidden]
+    cli.hidden_size = hidden
     cli.activation = config.get("activation", "relu")
     cli.loss = config.get("loss", "cross_entropy")
     cli.weight_init = config.get("weight_init", "random")
@@ -120,3 +121,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
