@@ -1,6 +1,5 @@
 """
-Loss/Objective Functions and Their Derivatives
-Implements: Cross-Entropy, Mean Squared Error (MSE)
+Loss Functions
 """
 
 import numpy as np
@@ -27,7 +26,7 @@ class Cross_Entropy:
 
     def backward(self):
 
-        return (self.y_pred - self.y_true)/ self.y_true.shape[0]
+        return (self.y_pred - self.y_true)
 
 
 
@@ -50,4 +49,4 @@ class MSE:
 
     def backward(self):
 
-        return 2 * (self.y_pred - self.y_true)/ self.y_true.shape[0]*self.y_true.shape[1]
+        return 2 * (self.y_pred - self.y_true)
