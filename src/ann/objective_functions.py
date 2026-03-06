@@ -26,7 +26,7 @@ class Cross_Entropy:
 
     def backward(self):
 
-        return (self.y_pred - self.y_true)
+        return (self.y_pred - self.y_true)//self.input.shape[0]
 
 
 
@@ -49,4 +49,4 @@ class MSE:
 
     def backward(self):
 
-        return 2 * (self.y_pred - self.y_true)
+        return 2 * (self.y_pred - self.y_true)//self.input.shape[0]*self.input.shape[1]
