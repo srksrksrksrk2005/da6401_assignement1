@@ -116,6 +116,10 @@ class NeuralNetwork:
         for i in range(len(grad_W_list)):
             self.grad_W[i] = grad_W_list[i]
             self.grad_b[i] = grad_b_list[i]
+        # # self.grad_W = grad_W_list
+        # # self.grad_b = grad_b_list
+        # self.grad_W = np.array(grad_W_list, dtype=object)
+        # self.grad_b = np.array(grad_b_list, dtype=object)
         return self.grad_W, self.grad_b
 
     def update_weights(self):
