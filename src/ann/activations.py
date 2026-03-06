@@ -14,7 +14,6 @@ class ReLU:
         dx = grad.copy()
         dx[self.output <= 0] = 0
         return dx   
-        # return grad * (self.output >= 0).astype(grad.dtype)
 
 
 class Sigmoid:
