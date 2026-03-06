@@ -49,4 +49,4 @@ class MSE:
 
     def backward(self):
 
-        return 2 * (self.y_pred - self.y_true))/self.y_pred.shape[0]*)self.y_pred.shape[1]
+        return 2 * (self.y_pred - self.y_true)/self.y_pred.shape[0]*)self.y_pred.shape[1]
