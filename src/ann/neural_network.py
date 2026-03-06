@@ -87,8 +87,7 @@ class NeuralNetwork:
             - `grad_Ws[0]` is gradient for the last (output) layer weights,
             `grad_bs[0]` is gradient for the last layer biases, and so on.
         """
-        if self.loss.y_pred is None:
-            self.loss.forward(logits, y_true)
+        self.loss.forward(logits, y_true)
         grad = self.loss.backward()
 
         grad_W = []
