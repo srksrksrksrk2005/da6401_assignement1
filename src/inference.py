@@ -2,59 +2,145 @@
 Inference Script
 Evaluate trained models on test sets
 """
-import argparse
-import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score ,confusion_matrix
-from utils.data_loader import load_data
-from ann.neural_network import NeuralNetwork
-from ann.optimizers import SGD
-import json
-def parse_arguments(args_list=None):
-    parser = argparse.ArgumentParser(description="Run inference on test set")
 
+import argparse
+from ann.neural_network import NeuralNetwork
+from utils.data_loader import load_data
+import numpy as np
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+
+def parse_arguments():
+    """
+    Parse command-line arguments for inference.
+    
+    TODO: Implement argparse with:
+    - model_path: Path to saved model weights(do not give absolute path, rather provide relative path)
+    - dataset: Dataset to evaluate on
+    - batch_size: Batch size for inference
+    - hidden_layers: List of hidden layer sizes
+    - num_neurons: Number of neurons in hidden layers
+    - activation: Activation function ('relu', 'sigmoid', 'tanh')
+    """
+    parser = argparse.ArgumentParser(description='Run inference on test set')
     parser.add_argument(
         "-d", "--dataset",
+        type=str,
         choices=["mnist", "fashion_mnist"],
-        required=True
+        default="mnist",
+        help="Choose dataset: mnist or fashion_mnist"
     )
 
+    # Epochs
     parser.add_argument(
-        "--model_path",
-        required=True
+        "-e", "--epochs",
+        type=int,
+        default=10,
+        help="Number of training epochs"
     )
 
-    parser.add_argument(
-        "--config_path",
-        required=True
-    )
-
+    # Batch size
     parser.add_argument(
         "-b", "--batch_size",
         type=int,
-        default=128
+        default=32,
+        help="Mini-batch size"
     )
 
-    return parser.parse_args(args_list)
-# def parse_arguments():
-#     parser = argparse.ArgumentParser(description='Run inference on test set')
+    # Loss function
+    parser.add_argument(
+        "-l", "--loss",
+        type=str,
+        choices=["mean_squared_error", "cross_entropy"],
+        default="cross_entropy",
+        help="Loss function"
+    )
 
-#     parser.add_argument("-d","--dataset",
-#     choices=["mnist","fashion_mnist"],
-#     required=True)
+    # Optimizer
+    parser.add_argument(
+        "-o", "--optimizer",
+        type=str,
+        choices=["sgd", "momentum", "nag", "rmsprop"],
+        default="rmsprop",
+        help="Optimizer"
+    )
 
-#     parser.add_argument("--model_path", required=True)
+    # Learning rate
+    parser.add_argument(
+        "-lr", "--learning_rate",
+        type=float,
+        default=0.001,
+        help="Initial learning rate"
+    )
 
-#     parser.add_argument("--config_path", required=True)
+    # Weight decay
+    parser.add_argument(
+        "-wd", "--weight_decay",
+        type=float,
+        default=0.0,
+        help="Weight decay for L2 regularization"
+    )
 
-#     parser.add_argument("-b","--batch_size", type=int, default=128)
-#     return parser.parse_args()
+    # Number of hidden layers
+    parser.add_argument(
+        "-nhl", "--num_layers",
+        type=int,
+        default=2,
+        help="Number of hidden layers"
+    )
+
+    # Hidden layer sizes
+    parser.add_argument(
+        "-sz", "--hidden_size",
+        type=int,
+        nargs="+",
+        default=[128, 64],
+        help="Number of neurons in each hidden layer"
+    )
+
+    # Activation
+    parser.add_argument(
+        "-a", "--activation",
+        type=str,
+        choices=["sigmoid", "tanh", "relu"],
+        default="relu",
+        help="Activation function for hidden layers"
+    )
+
+    # Weight initialization
+    parser.add_argument(
+        "-w_i", "--weight_init",
+        type=str,
+        choices=["random", "xavier"],
+        default="xavier",
+        help="Weight initialization method"
+    )
+
+    # W&B project
+    parser.add_argument(
+        "-w_p", "--wandb_project",
+        type=str,
+        default="default_project",
+        help="Weights & Biases project ID"
+    )
+
+    parser.add_argument(
+        "-mp", "--model_path",
+        type=str,
+        default="best_model.npy",
+        help="Relative path to save trained model"
+    )
+    return parser.parse_args()
+
 
 
 def load_model(model_path):
     """
     Load trained model from disk.
     """
-    return np.load(model_path, allow_pickle=True).item()
+    weights = np.load(model_path, allow_pickle=True).item()  
+    return weights
+
+
 
 
 def evaluate_model(model, X_test, y_test): 
@@ -64,87 +150,40 @@ def evaluate_model(model, X_test, y_test):
     TODO: Return Dictionary - logits, loss, accuracy, f1, precision, recall
     """
     logits = model.forward(X_test)
-    
+    loss = model.loss.forward(logits, y_test)
     exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
     probs = exp / np.sum(exp, axis=1, keepdims=True)
-
     y_pred = np.argmax(probs, axis=1)
     y_true = np.argmax(y_test, axis=1)
 
-    loss = model.loss.forward(logits, y_test)
-
     accuracy = accuracy_score(y_true, y_pred)
-    precision = precision_score(y_true, y_pred, average="macro")
-    recall = recall_score(y_true, y_pred, average="macro")
-    f1 = f1_score(y_true, y_pred, average="macro")
-    cm = confusion_matrix(y_true, y_pred)
-    
+    precision = precision_score(y_true, y_pred, average='weighted')
+    recall = recall_score(y_true, y_pred, average='weighted')
+    f1 = f1_score(y_true, y_pred, average='weighted')
+
     return {
         "logits": logits,
         "loss": loss,
         "accuracy": accuracy,
         "precision": precision,
         "recall": recall,
-        "f1": f1
-    }
-
-
-
-def main(args=None):
+        "f1": f1}
+    
+def main():
     """
     Main inference function.
-    
+
     TODO: Must return Dictionary - logits, loss, accuracy, f1, precision, recall
     """
-    if args is None:
-        args = parse_arguments()
-
-    # Load dataset
-    _, _, X_test, y_test = load_data(args.dataset)
-
-    # Load saved weights (expected to be a dict of W0,b0,...)
-    weights = load_model(args.model_path)
-
-    # Load config JSON (dictionary with keys: hidden_size, activation, loss, weight_init, etc.)
-    with open(args.config_path, "r") as f:
-        config = json.load(f)
-
-    # Build a small cli-like object expected by NeuralNetwork
-    class DummyArgs:
-        pass
-
-    cli = DummyArgs()
-    # map config keys to the cli object used by NeuralNetwork
-    # Accept both 'hidden_size' or maybe 'hidden_sizes' inside config
-    hidden = config.get("hidden_size", config.get("hidden_sizes", config.get("sz", [])))
-    if isinstance(hidden, int):
-        hidden = [hidden]
-    cli.hidden_size = hidden
-    cli.activation = config.get("activation", "relu")
-    cli.loss = config.get("loss", "cross_entropy")
-    cli.weight_init = config.get("weight_init", "random")
-    cli.num_layers = config.get("num_layers", len(cli.hidden_size) if cli.hidden_size else 0)
-    cli.batch_size = config.get("batch_size", args.batch_size)
-    # optimizer not needed for inference, but NeuralNetwork expects an attribute
-    cli.optimizer = None
-
-    # Initialize model and set weights
-    model = NeuralNetwork(cli)
-    model.set_weights(weights)
-
-    # Evaluate
+    args = parse_arguments()
+    dataset = load_data(args.dataset)
+    X_test, y_test = dataset[2::]  
+    model = NeuralNetwork(args)  
+    model.set_weights(load_model(args.model_path)) 
     results = evaluate_model(model, X_test, y_test)
-
-    print("Evaluation Results:")
-    print(f"Loss: {results['loss']:.4f}")
-    print(f"Accuracy: {results['accuracy']:.4f}")
-    print(f"Precision: {results['precision']:.4f}")
-    print(f"Recall: {results['recall']:.4f}")
-    print(f"F1 Score: {results['f1']:.4f}") 
     print("Evaluation complete!")
+    print(results)
     return results
-
 
 if __name__ == '__main__':
     main()
-    
