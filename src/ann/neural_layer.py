@@ -25,8 +25,8 @@ class Linear:
 
         batch_size = self.input.shape[0]
 
-        self.grad_W = (self.input.T @ grad) / batch_size
-        self.grad_b = np.sum(grad, axis=0, keepdims=True) / batch_size
+        self.grad_W = (self.input.T @ grad)
+        self.grad_b = np.sum(grad, axis=0, keepdims=True)
 
         dX = grad @ self.W.T
 
