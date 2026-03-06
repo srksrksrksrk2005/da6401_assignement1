@@ -19,7 +19,6 @@ class NeuralNetwork:
         input_size = 784
         output_size = 10
 
-        # read hidden sizes safely
         if hasattr(args, "hidden_size"):
             hidden_sizes = args.hidden_size
         elif hasattr(args, "hidden_sizes"):
@@ -44,16 +43,12 @@ class NeuralNetwork:
         activation_class = activation_map[activation_name]
 
         layer_sizes = [input_size] + hidden_sizes + [output_size]
-
         for i in range(len(layer_sizes) - 1):
-
-            self.layers.append(
-                Linear(layer_sizes[i], layer_sizes[i+1], weight_init)
-            )
-
+            in_sz = int(layer_sizes[i]); out_sz = int(layer_sizes[i+1])
+            self.layers.append(Linear(in_sz, out_sz, weight_init))
             if i < len(layer_sizes) - 2:
                 self.layers.append(activation_class())
-
+                
         loss_name = getattr(args, "loss", "cross_entropy")
 
         if loss_name == "cross_entropy":
@@ -62,6 +57,8 @@ class NeuralNetwork:
             self.loss = MSE()
 
         self.optimizer = getattr(args, "optimizer", None)
+        self.grad_W = None
+        self.grad_b = None
 
     def update_weights(self):
         self.optimizer.step(self.layers)
@@ -101,18 +98,8 @@ class NeuralNetwork:
                 grad_W.append(layer.grad_W)
                 grad_b.append(layer.grad_b)
 
-        grad_W.reverse()
-        grad_b.reverse()
-        self.grad_W = np.empty(len(grad_W), dtype=object)
-        self.grad_b = np.empty(len(grad_b), dtype=object)
-
-        for i in range(len(grad_W)):
-            self.grad_W[i] = grad_W[i]
-            self.grad_b[i] = grad_b[i]
-        # # # self.grad_W = grad_W_list
-        # # # self.grad_b = grad_b_list
-        # self.grad_W = np.array(grad_W_list, dtype=object)
-        # self.grad_b = np.array(grad_b_list, dtype=object)
+        self.grad_W = grad_W
+        self.grad_b = grad_b
         return grad_W, grad_b
 
 
@@ -173,7 +160,7 @@ class NeuralNetwork:
                 epoch_loss += loss
                 
                 self.backward(y_batch, logits)
-                self.optimizer.step(self.layers)
+                self.update_weights()
                 iteration += 1  
             avg_loss = epoch_loss /  int(np.ceil(n_samples / batch_size))
             print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
