@@ -40,4 +40,4 @@ class MSE:
 
         batch = self.y_true.shape[0]
 
-        return 2*(self.y_pred - self.y_true)/(batch*self.y_true.shape[1])
+        return 2*(self.y_pred - self.y_true)/(batch)
