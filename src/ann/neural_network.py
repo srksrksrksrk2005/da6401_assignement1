@@ -16,9 +16,9 @@ class NeuralNetwork:
     """
 
     def __init__(self, cli_args):
-        self.layers = []
         input_size = 784
         output_size = (getattr(cli_args, "num_classes", 10))
+        self.layers = []
         # Read hidden layer sizes safely
         if hasattr(cli_args, "hidden_size"):
             hidden_sizes = cli_args.hidden_size
@@ -32,23 +32,30 @@ class NeuralNetwork:
             hidden_sizes = []
         if isinstance(hidden_sizes, int):
             hidden_sizes = [hidden_sizes]
+            
         activation_name = getattr(cli_args, "activation", "relu")
         weight_init = getattr(cli_args, "weight_init", "random")
+        
         activations = {
             "relu": ReLU,
             "sigmoid": Sigmoid,
             "tanh": Tanh
         }   
         activation_class = activations[activation_name]
+        layer_sizes = [784] + hidden_sizes + [10]
 
-        prev_size = input_size
-        
-        for h in hidden_sizes:
-            self.layers.append(Linear(prev_size, h,weight_init))
-            self.layers.append(activation_class())
-            prev_size = h
+        prev_size = layer_sizes[0]
 
-        self.layers.append(Linear(prev_size, output_size, weight_init))
+        for h in layer_sizes[1:]:
+
+            self.layers.append(
+                Linear(prev_size, int(h), weight_init)
+            )
+
+            prev_size = int(h)
+
+            if h != 10:
+                self.layers.append(activation_class())
 
         self.loss = Cross_Entropy() if cli_args.loss.lower() == "cross_entropy" else MSE()
         
