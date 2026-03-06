@@ -1,3 +1,4 @@
+
 """
 Main Training Script
 Entry point for training neural networks with command-line arguments
@@ -6,14 +7,17 @@ Entry point for training neural networks with command-line arguments
 import argparse
 from sklearn.metrics import f1_score
 import wandb
+
+from html import parser
 import numpy as np
 from utils.data_loader import load_data
 from ann.neural_network import NeuralNetwork
 from ann.optimizers import SGD, RMSProp, Momentum, NAG
 import json
+
+
+
 def parse_arguments():
-    
-    parser = argparse.ArgumentParser(description='Train a neural network')
     """
     Parse command-line arguments.
     
@@ -22,7 +26,7 @@ def parse_arguments():
     - epochs: Number of training epochs
     - batch_size: Mini-batch size
     - learning_rate: Learning rate for optimizer
-    - optimizer: 'sgd', 'momentum', 'nag', 'rmsprop'
+    - optimizer: 'sgd', 'momentum', 'nag', 'rmsprop', 'adam', 'nadam'
     - hidden_layers: List of hidden layer sizes
     - num_neurons: Number of neurons in hidden layers
     - activation: Activation function ('relu', 'sigmoid', 'tanh')
@@ -31,19 +35,118 @@ def parse_arguments():
     - wandb_project: W&B project name
     - model_save_path: Path to save trained model (do not give absolute path, rather provide relative path)
     """
-    parser.add_argument("-d", "--dataset", choices=["mnist", "fashion_mnist"], required=True)
-    parser.add_argument("-e", "--epochs", type=int, required=True)
-    parser.add_argument("-b", "--batch_size", type=int, required=True, default=128)
-    parser.add_argument("-l", "--loss", choices=["cross_entropy", "MSE"], required=True)
-    parser.add_argument("-o", "--optimizer", choices=["sgd", "momentum", "nag", "rmsprop"], required=True)
-    parser.add_argument("-lr", "--learning_rate", type=float, required=True)
-    parser.add_argument("-wd", "--weight_decay", type=float, default=0.0)
-    parser.add_argument("-nhl", "--num_layers", type=int, required=True)
-    parser.add_argument("--hidden_size", nargs="+", type=int)
-    parser.add_argument("-a", "--activation", choices=["relu", "sigmoid", "tanh"], required=True)
-    parser.add_argument("-w_i", "--weight_init", choices=["random", "xavier"], required=True)
-    parser.add_argument("-w_p", "--wandb_project", default="DA6401_assignement1")
-    
+    parser = argparse.ArgumentParser(description='Train a neural network')
+    parser.add_argument(
+        "-d", "--dataset",
+        type=str,
+        choices=["mnist", "fashion_mnist"],
+        default="mnist",
+        help="Choose dataset: mnist or fashion_mnist"
+    )
+
+    # Epochs
+    parser.add_argument(
+        "-e", "--epochs",
+        type=int,
+        default=10,
+        help="Number of training epochs"
+    )
+
+    # Batch size
+    parser.add_argument(
+        "-b", "--batch_size",
+        type=int,
+        default=32,
+        help="Mini-batch size"
+    )
+
+    # Loss function
+    parser.add_argument(
+        "-l", "--loss",
+        type=str,
+        choices=["mean_squared_error", "cross_entropy"],
+        default="cross_entropy",
+        help="Loss function"
+    )
+
+    # Optimizer
+    parser.add_argument(
+        "-o", "--optimizer",
+        type=str,
+        choices=["sgd", "momentum", "nag", "rmsprop"],
+        default="rmsprop",
+        help="Optimizer"
+    )
+
+    # Learning rate
+    parser.add_argument(
+        "-lr", "--learning_rate",
+        type=float,
+        default=0.001,
+        help="Initial learning rate"
+    )
+
+    # Weight decay
+    parser.add_argument(
+        "-wd", "--weight_decay",
+        type=float,
+        default=0.0,
+        help="Weight decay for L2 regularization"
+    )
+
+    # Number of hidden layers
+    parser.add_argument(
+        "-nhl", "--num_layers",
+        type=int,
+        default=2,
+        help="Number of hidden layers"
+    )
+
+    # Hidden layer sizes
+    parser.add_argument(
+        "-sz", "--hidden_size",
+        type=int,
+        nargs="+",
+        default=[128, 64],
+        help="Number of neurons in each hidden layer"
+    )
+
+    # Activation
+    parser.add_argument(
+        "-a", "--activation",
+        type=str,
+        choices=["sigmoid", "tanh", "relu"],
+        default="relu",
+        help="Activation function for hidden layers"
+    )
+
+    # Weight initialization
+    parser.add_argument(
+        "-w_i", "--weight_init",
+        type=str,
+        choices=["random", "xavier"],
+        default="xavier",
+        help="Weight initialization method"
+    )
+
+    # W&B project
+    parser.add_argument(
+        "-w_p", "--wandb_project",
+        type=str,
+        default="default_project",
+        help="Weights & Biases project ID"
+    )
+
+    parser.add_argument(
+        "-mp", "--model_path",
+        type=str,
+        default="best_model.npy",
+        help="Relative path to save trained model"
+    )
+
+
+
+
     return parser.parse_args()
 
 
@@ -75,29 +178,26 @@ def main():
     model = NeuralNetwork(args)
     print("Starting training...")
     model.train(X_train, y_train, args.epochs, args.batch_size)
-    y_train_labels = np.argmax(y_train, axis=1)  # Convert one-hot to class labels
 
     train_acc, train_f1 = model.evaluate(X_train, y_train)
     test_acc, test_f1 = model.evaluate(X_test, y_test)
-    if test_f1 > best_f1:
-        best_f1 = test_f1
-        model_data = {
-            "weights": model.get_weights(),
-            "config": {
-                "hidden_size": args.hidden_size,
-                "activation": args.activation,
-                "loss": args.loss,
-                "weight_init": args.weight_init,
-                "optimizer": args.optimizer.__class__.__name__ if args.optimizer is not None else None,
-                "learning_rate": args.learning_rate,
-                "num_layers": args.num_layers,
-                "batch_size": args.batch_size
-            }
+    weights = model.get_weights()
+    np.save(args.model_path, weights)
+    model_data = {
+        "config": {
+            "hidden_size": args.hidden_size,
+            "activation": args.activation,
+            "loss": args.loss,
+            "weight_init": args.weight_init,
+            "optimizer": args.optimizer.__class__.__name__ if args.optimizer is not None else None,
+            "learning_rate": args.learning_rate,
+            "num_layers": args.num_layers,
+            "batch_size": args.batch_size
         }
-        np.save("best_model.npy", model_data["weights"])
+    }
 
-        with open("best_config.json", "w") as f:
-            json.dump(model_data["config"], f)
+    with open("best_config.json", "w") as f:
+        json.dump(model_data["config"], f)
 
       
     print("Training complete!")
