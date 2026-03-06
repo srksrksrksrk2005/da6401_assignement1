@@ -98,6 +98,7 @@ class NeuralNetwork:
             - `grad_Ws[0]` is gradient for the last (output) layer weights,
             `grad_bs[0]` is gradient for the last layer biases, and so on.
         """
+        _ = self.loss.forward(y_pred, y_true)
         grad = self.loss.backward()
         grad_W_list = []
         grad_b_list = []
@@ -106,7 +107,7 @@ class NeuralNetwork:
 
             grad = layer.backward(grad)
 
-            if hasattr(layer, "grad_W"):
+            if hasattr(layer, "W"):
                 grad_W_list.append(layer.grad_W)
                 grad_b_list.append(layer.grad_b)
 
@@ -116,10 +117,13 @@ class NeuralNetwork:
         for i in range(len(grad_W_list)):
             self.grad_W[i] = grad_W_list[i]
             self.grad_b[i] = grad_b_list[i]
-        # # self.grad_W = grad_W_list
-        # # self.grad_b = grad_b_list
+        # # # self.grad_W = grad_W_list
+        # # # self.grad_b = grad_b_list
         # self.grad_W = np.array(grad_W_list, dtype=object)
         # self.grad_b = np.array(grad_b_list, dtype=object)
+        print(len(self.grad_W))
+        print(self.grad_W[0].shape)
+        print(self.grad_W[1].shape)
         return self.grad_W, self.grad_b
 
     def update_weights(self):
