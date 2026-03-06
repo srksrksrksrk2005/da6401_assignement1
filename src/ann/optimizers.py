@@ -9,15 +9,16 @@ class SGD:
     def __init__(self, lr=0.01, weight_decay=0.0):
         self.lr = lr
         self.weight_decay = weight_decay
-
     def step(self, layers):
+        linear_idx = 0
         for layer in layers:
             if hasattr(layer, "W"):
                 dW = layer.grad_W + self.weight_decay * layer.W
-                
+                db = layer.grad_b
                 layer.W -= self.lr * dW
-                layer.b -= self.lr * layer.grad_b
-
+                layer.b -= self.lr * db
+                linear_idx += 1
+                
 class Momentum:
     def __init__(self, lr=0.01, beta=0.9, weight_decay=0.0):
         self.lr = lr
