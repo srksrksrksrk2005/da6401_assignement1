@@ -37,6 +37,6 @@ class Linear:
         self.grad_b = np.sum(grad, axis=0, keepdims=True)/ self.input.shape[0]  
 
         # gradient to previous layer
-        dX = grad @ self.W.T
+        dX = grad @ self.W.T/self.input.shape[0]  
 
         return dX
