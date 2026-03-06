@@ -3,82 +3,68 @@ Main Neural Network Model class
 Handles forward and backward propagation loops
 """
 
-from sklearn.metrics import f1_score
+import numpy as np
+
 from .neural_layer import Linear
 from .activations import ReLU, Sigmoid, Tanh
 from .objective_functions import Cross_Entropy, MSE
-import numpy as np
-import wandb
+from sklearn.metrics import f1_score
 
 class NeuralNetwork:
-    """
-        Main model class that orchestrates the neural network training and inference.
-    """
 
-    def __init__(self, cli_args):
-        input_size = 784
-        output_size = (getattr(cli_args, "num_classes", 10))
+    def __init__(self, args):
+
         self.layers = []
-        # Read hidden layer sizes safely
-        if hasattr(cli_args, "hidden_size"):
-            hidden_sizes = cli_args.hidden_size
-        elif hasattr(cli_args, "hidden_sizes"):
-            hidden_sizes = cli_args.hidden_sizes
-        elif hasattr(cli_args, "sz"):
-            hidden_sizes = cli_args.sz
-        elif hasattr(cli_args, "hidden_layer_size"):
-            hidden_sizes = cli_args.hidden_layer_size
+
+        input_size = 784
+        output_size = 10
+
+        # read hidden sizes safely
+        if hasattr(args, "hidden_size"):
+            hidden_sizes = args.hidden_size
+        elif hasattr(args, "hidden_sizes"):
+            hidden_sizes = args.hidden_sizes
+        elif hasattr(args, "sz"):
+            hidden_sizes = args.sz
         else:
             hidden_sizes = []
+
         if isinstance(hidden_sizes, int):
             hidden_sizes = [hidden_sizes]
-            
-        activation_name = getattr(cli_args, "activation", "relu")
-        weight_init = getattr(cli_args, "weight_init", "random")
-        
-        activations = {
+
+        activation_name = getattr(args, "activation", "relu")
+        weight_init = getattr(args, "weight_init", "random")
+
+        activation_map = {
             "relu": ReLU,
             "sigmoid": Sigmoid,
             "tanh": Tanh
-        }   
-        activation_class = activations[activation_name]
-        layer_sizes = [784] + hidden_sizes + [10]
+        }
 
-        prev_size = layer_sizes[0]
+        activation_class = activation_map[activation_name]
 
-        for h in layer_sizes[1:]:
+        layer_sizes = [input_size] + hidden_sizes + [output_size]
+
+        for i in range(len(layer_sizes) - 1):
 
             self.layers.append(
-                Linear(prev_size, int(h), weight_init)
+                Linear(layer_sizes[i], layer_sizes[i+1], weight_init)
             )
 
-            prev_size = int(h)
-
-            if h != 10:
+            if i < len(layer_sizes) - 2:
                 self.layers.append(activation_class())
 
-        self.loss = Cross_Entropy() if cli_args.loss.lower() == "cross_entropy" else MSE()
-        
-        self.optimizer = cli_args.optimizer
-        
-    def get_weights(self):
-        d = {}
-        lin_idx = 0
-        for layer in self.layers:
-            if hasattr(layer, "W"):
-                d[f"W{lin_idx}"] = layer.W.copy()
-                d[f"b{lin_idx}"] = layer.b.copy()
-                lin_idx += 1
-        return d
+        loss_name = getattr(args, "loss", "cross_entropy")
 
-    def set_weights(self, weights_list):
-        lin_idx = 0
-        for layer in self.layers:   
-            if hasattr(layer, "W"):
-                layer.W = weights_list[f"W{lin_idx}"].copy()
-                layer.b = weights_list[f"b{lin_idx}"].copy()
-                lin_idx += 1
-                
+        if loss_name == "cross_entropy":
+            self.loss = Cross_Entropy()
+        else:
+            self.loss = MSE()
+
+        self.optimizer = getattr(args, "optimizer", None)
+
+    def update_weights(self):
+        self.optimizer.step(self.layers)
     def forward(self, X):
         """
             Forward propagation through all layers.
@@ -86,12 +72,15 @@ class NeuralNetwork:
             X is shape (b, D_in) and output is shape (b, D_out).
             b is batch size, D_in is input dimension, D_out is output dimension.
         """
-        logits = X
+        out = X
+
         for layer in self.layers:
-            logits = layer.forward(logits)
-        return logits
-    
-    def backward(self, y_true, y_pred):
+            out = layer.forward(out)
+
+        return out
+
+
+    def backward(self, y_true, logits):
         """
             Backward propagation to compute gradients.
             Returns two numpy arrays: grad_Ws, grad_bs.
@@ -99,35 +88,72 @@ class NeuralNetwork:
             `grad_bs[0]` is gradient for the last layer biases, and so on.
         """
         if self.loss.y_pred is None:
-            self.loss.forward(y_pred, y_true)
+            self.loss.forward(logits, y_true)
         grad = self.loss.backward()
-        grad_W_list = []
-        grad_b_list = []
+
+        grad_W = []
+        grad_b = []
 
         for layer in reversed(self.layers):
 
             grad = layer.backward(grad)
 
-            if hasattr(layer, "W"):
-                grad_W_list.append(layer.grad_W)
-                grad_b_list.append(layer.grad_b)
-        
-        self.grad_W = np.empty(len(grad_W_list), dtype=object)
-        self.grad_b = np.empty(len(grad_b_list), dtype=object)
+            if hasattr(layer, "grad_W"):
+                grad_W.append(layer.grad_W)
+                grad_b.append(layer.grad_b)
 
-        for i in range(len(grad_W_list)):
-            self.grad_W[i] = grad_W_list[i]
-            self.grad_b[i] = grad_b_list[i]
+        grad_W.reverse()
+        grad_b.reverse()
+        self.grad_W = np.empty(len(grad_W), dtype=object)
+        self.grad_b = np.empty(len(grad_b), dtype=object)
+
+        for i in range(len(grad_W)):
+            self.grad_W[i] = grad_W[i]
+            self.grad_b[i] = grad_b[i]
         # # # self.grad_W = grad_W_list
         # # # self.grad_b = grad_b_list
         # self.grad_W = np.array(grad_W_list, dtype=object)
         # self.grad_b = np.array(grad_b_list, dtype=object)
-        return self.grad_W, self.grad_b
+        return grad_W, grad_b
 
-    def update_weights(self):
-        self.optimizer.step(self.layers)
 
-    
+    def get_weights(self):
+
+        weights = {}
+
+        idx = 0
+        for layer in self.layers:
+
+            if hasattr(layer, "W"):
+                weights[f"W{idx}"] = layer.W.copy()
+                weights[f"b{idx}"] = layer.b.copy()
+                idx += 1
+
+        return weights
+
+
+    def set_weights(self, weights):
+
+        idx = 0
+        for layer in self.layers:
+
+            if hasattr(layer, "W"):
+                layer.W = weights[f"W{idx}"].copy()
+                layer.b = weights[f"b{idx}"].copy()
+                idx += 1
+    def evaluate(self, X, y):
+        
+        logits  = self.forward(X)
+
+        exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+        probs = exp / np.sum(exp, axis=1, keepdims=True)
+
+        predictions = np.argmax(probs, axis=1)
+        true_labels = np.argmax(y, axis=1)
+
+        accuracy = np.mean(predictions == true_labels)
+
+        return accuracy ,f1_score(true_labels, predictions, average='macro')
     def train(self, X_train, y_train, epochs, batch_size):
         n_samples = X_train.shape[0]
         iteration = 0
@@ -154,18 +180,3 @@ class NeuralNetwork:
             print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
             train_acc = self.evaluate(X_train[:5000], y_train[:5000])[0]
         return train_acc ,f1_score(y_train[:5000].argmax(axis=1), self.forward(X_train[:5000]).argmax(axis=1), average='macro')
-    
-    
-    def evaluate(self, X, y):
-        
-        logits  = self.forward(X)
-
-        exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-        probs = exp / np.sum(exp, axis=1, keepdims=True)
-
-        predictions = np.argmax(probs, axis=1)
-        true_labels = np.argmax(y, axis=1)
-
-        accuracy = np.mean(predictions == true_labels)
-
-        return accuracy ,f1_score(true_labels, predictions, average='macro')
