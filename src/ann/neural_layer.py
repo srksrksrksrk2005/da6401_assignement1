@@ -28,8 +28,8 @@ class Linear:
     def backward(self, grad):
 
         # NO batch division here
-        self.grad_W = self.input.T @ grad
-        self.grad_b = np.sum(grad, axis=0, keepdims=True)
+        self.grad_W = (self.input.T @ grad)/self.input.shape[0]
+        self.grad_b = np.sum(grad, axis=0, keepdims=True)/self.input.shape[0]
 
         dX = grad @ self.W.T
 
