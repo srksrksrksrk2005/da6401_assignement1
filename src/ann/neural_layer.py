@@ -29,7 +29,10 @@ class Linear:
         NOTE: No division by batch here. The loss/backward returns dL/dz with
         the exact scaling used by the grader (we use SUM-based loss).
         """
-        self.grad_W = self.input.T @ grad
-        self.grad_b = np.sum(grad, axis=0, keepdims=True)
-        dX = grad @ self.W.T
+        
+        self.grad_W = self.input.T @ grad  # gradient for weights
+    
+        self.grad_b = np.sum(grad, axis=0, keepdims=True) # gradient wrt biases
+        
+        dX = grad @ self.W.T # gradient to previous layer
         return dX
