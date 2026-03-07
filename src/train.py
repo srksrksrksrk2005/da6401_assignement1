@@ -36,116 +36,42 @@ def parse_arguments():
     - model_save_path: Path to save trained model (do not give absolute path, rather provide relative path)
     """
     parser = argparse.ArgumentParser(description='Train a neural network')
-    parser.add_argument(
-        "-d", "--dataset",
-        type=str,
-        choices=["mnist", "fashion_mnist"],
-        default="mnist",
-        help="Choose dataset: mnist or fashion_mnist"
-    )
+    parser.add_argument("-d", "--dataset",type=str,choices=["mnist", "fashion_mnist"],default="mnist",help="Choose dataset: mnist or fashion_mnist")
 
     # Epochs
-    parser.add_argument(
-        "-e", "--epochs",
-        type=int,
-        default=10,
-        help="Number of training epochs"
-    )
+    parser.add_argument("-e", "--epochs",type=int,default=10,help="Number of training epochs")
 
     # Batch size
-    parser.add_argument(
-        "-b", "--batch_size",
-        type=int,
-        default=32,
-        help="Mini-batch size"
-    )
+    parser.add_argument("-b", "--batch_size",type=int,default=32,help="Mini-batch size")
 
     # Loss function
-    parser.add_argument(
-        "-l", "--loss",
-        type=str,
-        choices=["mean_squared_error", "cross_entropy"],
-        default="cross_entropy",
-        help="Loss function"
-    )
+    parser.add_argument("-l", "--loss",type=str,choices=["mse", "cross_entropy"],default="cross_entropy",help="Loss function")
 
     # Optimizer
-    parser.add_argument(
-        "-o", "--optimizer",
-        type=str,
-        choices=["sgd", "momentum", "nag", "rmsprop"],
-        default="rmsprop",
-        help="Optimizer"
-    )
+    parser.add_argument("-o", "--optimizer",type=str,choices=["sgd", "momentum", "nag", "rmsprop"],default="rmsprop",help="Optimizer")
 
     # Learning rate
-    parser.add_argument(
-        "-lr", "--learning_rate",
-        type=float,
-        default=0.001,
-        help="Initial learning rate"
-    )
+    parser.add_argument("-lr", "--learning_rate",type=float,default=0.005,help="Initial learning rate")
 
     # Weight decay
-    parser.add_argument(
-        "-wd", "--weight_decay",
-        type=float,
-        default=0.0,
-        help="Weight decay for L2 regularization"
-    )
+    parser.add_argument("-wd", "--weight_decay",type=float,default=0.0,help="Weight decay for L2 regularization")
 
     # Number of hidden layers
-    parser.add_argument(
-        "-nhl", "--num_layers",
-        type=int,
-        default=2,
-        help="Number of hidden layers"
-    )
+    parser.add_argument("-nhl", "--num_layers",type=int,default=2,help="Number of hidden layers")
 
     # Hidden layer sizes
-    parser.add_argument(
-        "-sz", "--hidden_size",
-        type=int,
-        nargs="+",
-        default=[128, 64],
-        help="Number of neurons in each hidden layer"
-    )
+    parser.add_argument("-sz", "--hidden_size",type=int,nargs="+",default=[128, 64],help="Number of neurons in each hidden layer")
 
     # Activation
-    parser.add_argument(
-        "-a", "--activation",
-        type=str,
-        choices=["sigmoid", "tanh", "relu"],
-        default="relu",
-        help="Activation function for hidden layers"
-    )
+    parser.add_argument("-a", "--activation",type=str,choices=["sigmoid", "tanh", "relu"],default="relu",help="Activation function for hidden layers")
 
     # Weight initialization
-    parser.add_argument(
-        "-w_i", "--weight_init",
-        type=str,
-        choices=["random", "xavier"],
-        default="xavier",
-        help="Weight initialization method"
-    )
+    parser.add_argument("-w_i", "--weight_init",type=str,choices=["random", "xavier"],default="xavier",help="Weight initialization method")
 
     # W&B project
-    parser.add_argument(
-        "-w_p", "--wandb_project",
-        type=str,
-        default="default_project",
-        help="Weights & Biases project ID"
-    )
+    parser.add_argument("-w_p", "--wandb_project",type=str,default="DA6401_assignement1",help="Weights & Biases project ID")
 
-    parser.add_argument(
-        "-mp", "--model_path",
-        type=str,
-        default="best_model.npy",
-        help="Relative path to save trained model"
-    )
-
-
-
+    parser.add_argument("-mp", "--model_path",type=str,default="best_model.npy",help="Relative path to save trained model")
 
     return parser.parse_args()
 
@@ -154,7 +80,6 @@ def main():
     """
     Main training function.
     """
-    best_f1 = -1
     args = parse_arguments()
     if args.num_layers != len(args.hidden_size):
         raise ValueError("num_layers must match length of hidden_size list")
@@ -179,8 +104,8 @@ def main():
     print("Starting training...")
     model.train(X_train, y_train, args.epochs, args.batch_size)
 
-    train_acc, train_f1 = model.evaluate(X_train, y_train)
-    test_acc, test_f1 = model.evaluate(X_test, y_test)
+    train_acc = model.evaluate(X_train, y_train)
+    test_acc = model.evaluate(X_test, y_test)
     weights = model.get_weights()
     np.save(args.model_path, weights)
     model_data = {
