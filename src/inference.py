@@ -11,67 +11,6 @@ from ann.optimizers import SGD
 import json
 
 
-
-
-
-
-# def main(args=None):
-#     """
-#     Main inference function.
-    
-#     TODO: Must return Dictionary - logits, loss, accuracy, f1, precision, recall
-#     """
-#     if args is None:
-#         args = parse_arguments()
-
-#     # Load dataset
-#     _, _, X_test, y_test = load_data("mnist")
-
-#     # Load saved weights (expected to be a dict of W0,b0,...)
-#     weights = load_model('''best_model.npy''')
-
-#     # Load config JSON (dictionary with keys: hidden_size, activation, loss, weight_init, etc.)
-#     with open('''best_config.json''', "r") as f:
-#         config = json.load(f)
-
-#     # Build a small cli-like object expected by NeuralNetwork
-#     class DummyArgs:
-#         pass
-
-#     cli = DummyArgs()
-#     # map config keys to the cli object used by NeuralNetwork
-#     # Accept both 'hidden_size' or maybe 'hidden_sizes' inside config
-#     hidden = config.get("hidden_size", config.get("hidden_sizes", config.get("sz", [])))
-#     if isinstance(hidden, int):
-#         hidden = [hidden]
-#     cli.hidden_size = hidden
-#     cli.activation = config.get("activation", "relu")
-#     cli.loss = config.get("loss", "cross_entropy")
-#     cli.weight_init = config.get("weight_init", "random")
-#     cli.num_layers = config.get("num_layers", len(cli.hidden_size) if cli.hidden_size else 0)
-#     cli.batch_size = config.get("batch_size", args.batch_size)
-#     # optimizer not needed for inference, but NeuralNetwork expects an attribute
-#     cli.optimizer = None
-
-#     # Initialize model and set weights
-#     model = NeuralNetwork(cli)
-#     model.set_weights(weights)
-
-#     # Evaluate
-#     results = evaluate_model(model, X_test, y_test)
-
-#     print("Evaluation Results:")
-#     print(f"Loss: {results['loss']:.4f}")
-#     print(f"Accuracy: {results['accuracy']:.4f}")
-#     print(f"Precision: {results['precision']:.4f}")
-#     print(f"Recall: {results['recall']:.4f}")
-#     print(f"F1 Score: {results['f1']:.4f}") 
-#     print("Evaluation complete!")
-#     return results
-
-
-# if __name__ == '__main__':
-#     main()
     
 """
 Inference Script
