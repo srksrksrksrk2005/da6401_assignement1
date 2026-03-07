@@ -5,22 +5,29 @@ Loss Functions
 import numpy as np
 
 
+def softmax(logits):
+    shifted = logits - np.max(logits, axis=1, keepdims=True)
+    exp_values = np.exp(shifted)
+    return exp_values / np.sum(exp_values, axis=1, keepdims=True)
+
+
 class Cross_Entropy:
 
     def __init__(self):
-        self.y_pred = None
+        self.y_pred= None
         self.y_true = None
 
     def forward(self, logits, y_true):
-        exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-        probs = exp / np.sum(exp, axis=1, keepdims=True)
-        self.y_pred = probs
+        shifted = logits - np.max(logits, axis=1, keepdims=True)
+        logsumexp = np.log(np.sum(np.exp(shifted), axis=1, keepdims=True))
+        log_probs = shifted - logsumexp
+        self.y_pred = np.exp(log_probs)
         self.y_true = y_true
-        loss = -np.sum(y_true * np.log(probs + 1e-12)) / logits.shape[0]
+        loss = -np.sum(y_true * log_probs) / logits.shape[0]
         return loss
 
     def backward(self):
-        return (self.y_pred - self.y_true)/self.y_true.shape[0]
+        return (self.y_pred - self.y_true) / self.y_true.shape[0]
 
 
 
@@ -30,14 +37,15 @@ class MSE:
         self.y_pred = None
         self.y_true = None
 
-    def forward(self, y_pred, y_true):
-
-        self.y_pred = y_pred
+    def forward(self, logits, y_true):
+        self.y_pred = softmax(logits)
         self.y_true = y_true
-        loss = np.sum((y_pred - y_true) ** 2)
+        loss = np.mean((self.y_pred - y_true) ** 2)
         return loss
 
     def backward(self):
         batch = self.y_true.shape[0]
-        C = self.y_true.shape[1]
-        return 2.0 * (self.y_pred - self.y_true) / (batch * C)
+        num_classes = self.y_true.shape[1]
+        grad_prob = 2.0 * (self.y_pred - self.y_true) / (batch * num_classes)
+        dot = np.sum(grad_prob * self.y_pred, axis=1, keepdims=True)
+        return self.y_pred * (grad_prob - dot)
