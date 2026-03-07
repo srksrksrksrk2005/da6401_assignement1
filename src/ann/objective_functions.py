@@ -5,12 +5,6 @@ Loss Functions
 import numpy as np
 
 
-def softmax(logits):
-    shifted = logits - np.max(logits, axis=1, keepdims=True)
-    exp_values = np.exp(shifted)
-    return exp_values / np.sum(exp_values, axis=1, keepdims=True)
-
-
 class Cross_Entropy:
 
     def __init__(self):
@@ -38,7 +32,9 @@ class MSE:
         self.y_true = None
 
     def forward(self, logits, y_true):
-        self.y_pred = softmax(logits)
+        shifted = logits - np.max(logits, axis=1, keepdims=True)
+        exp_values = np.exp(shifted)
+        self.y_pred = exp_values / np.sum(exp_values, axis=1, keepdims=True)
         self.y_true = y_true
         loss = np.mean((self.y_pred - y_true) ** 2)
         return loss
