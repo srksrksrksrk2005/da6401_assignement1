@@ -31,9 +31,7 @@ class Momentum:
             if hasattr(layer, "W"):
                 if i not in self.velocities:
                     self.velocities[i] = {"vW": np.zeros_like(layer.W),"vb": np.zeros_like(layer.b)}
-
                 dW = layer.grad_W + self.weight_decay * layer.W
-
                 self.velocities[i]["vW"] = self.beta * self.velocities[i]["vW"] + dW
                 self.velocities[i]["vb"] = self.beta * self.velocities[i]["vb"] + layer.grad_b
                 layer.W -= self.lr * self.velocities[i]["vW"]
@@ -51,17 +49,12 @@ class NAG:
             if hasattr(layer, "W"):
                 if i not in self.velocities:
                     self.velocities[i] = {"vW": np.zeros_like(layer.W),"vb": np.zeros_like(layer.b)}
-
-
                 dW = layer.grad_W + self.weight_decay * layer.W
                 db = layer.grad_b
-                
                 v_prev_W = self.velocities[i]["vW"]
                 v_prev_b = self.velocities[i]["vb"]
-                
                 self.velocities[i]["vW"] = self.beta * v_prev_W + dW
                 self.velocities[i]["vb"] = self.beta * v_prev_b + db
-
                 layer.W -= self.lr * (self.beta * v_prev_W + dW)
                 layer.b -= self.lr * (self.beta * v_prev_b + db)
 
@@ -78,13 +71,10 @@ class RMSProp:
             if hasattr(layer, "W"):
                 if i not in self.sq_grads:
                     self.sq_grads[i] = {"sW": np.zeros_like(layer.W),"sb": np.zeros_like(layer.b)}
-
                 dW = layer.grad_W + self.weight_decay * layer.W
                 db = layer.grad_b
-
                 self.sq_grads[i]["sW"] = self.beta * self.sq_grads[i]["sW"] + (1 - self.beta) * (dW ** 2)
                 self.sq_grads[i]["sb"] = self.beta * self.sq_grads[i]["sb"] + (1 - self.beta) * (db ** 2)
-
                 layer.W -= self.lr * dW / (np.sqrt(self.sq_grads[i]["sW"]) + self.epsilon)
                 layer.b -= self.lr * db / (np.sqrt(self.sq_grads[i]["sb"]) + self.epsilon)
 
