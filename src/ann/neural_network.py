@@ -34,11 +34,7 @@ class NeuralNetwork:
         activation_name = getattr(args, "activation", "relu")
         weight_init = getattr(args, "weight_init", "random")
 
-        activation_map = {
-            "relu": ReLU,
-            "sigmoid": Sigmoid,
-            "tanh": Tanh
-        }
+        activation_map = {"relu": ReLU,"sigmoid": Sigmoid,"tanh": Tanh}
 
         activation_class = activation_map[activation_name]
 
@@ -62,6 +58,7 @@ class NeuralNetwork:
 
     def update_weights(self):
         self.optimizer.step(self.layers)
+        
     def forward(self, X):
         """
             Forward propagation through all layers.
@@ -70,10 +67,8 @@ class NeuralNetwork:
             b is batch size, D_in is input dimension, D_out is output dimension.
         """
         out = X
-
         for layer in self.layers:
             out = layer.forward(out)
-
         return out
 
 
@@ -91,13 +86,11 @@ class NeuralNetwork:
         grad_b = []
 
         for layer in reversed(self.layers):
-
             grad = layer.backward(grad)
-
             if hasattr(layer, "grad_W"):
                 grad_W.append(layer.grad_W)
                 grad_b.append(layer.grad_b)
-
+                
         self.grad_W = grad_W
         self.grad_b = grad_b
         return grad_W, grad_b
@@ -106,10 +99,8 @@ class NeuralNetwork:
     def get_weights(self):
 
         weights = {}
-
         idx = 0
         for layer in self.layers:
-
             if hasattr(layer, "W"):
                 weights[f"W{idx}"] = layer.W.copy()
                 weights[f"b{idx}"] = layer.b.copy()
@@ -119,27 +110,25 @@ class NeuralNetwork:
 
 
     def set_weights(self, weights):
-
         idx = 0
         for layer in self.layers:
-
             if hasattr(layer, "W"):
                 layer.W = weights[f"W{idx}"].copy()
                 layer.b = weights[f"b{idx}"].copy()
                 idx += 1
+                
     def evaluate(self, X, y):
         
         logits  = self.forward(X)
-
         exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         probs = exp / np.sum(exp, axis=1, keepdims=True)
 
         predictions = np.argmax(probs, axis=1)
         true_labels = np.argmax(y, axis=1)
-
         accuracy = np.mean(predictions == true_labels)
 
-        return accuracy ,f1_score(true_labels, predictions, average='macro')
+        return accuracy 
+    
     def train(self, X_train, y_train, epochs, batch_size):
         n_samples = X_train.shape[0]
         iteration = 0
@@ -165,4 +154,4 @@ class NeuralNetwork:
             avg_loss = epoch_loss /  int(np.ceil(n_samples / batch_size))
             print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
             train_acc = self.evaluate(X_train[:5000], y_train[:5000])[0]
-        return train_acc ,f1_score(y_train[:5000].argmax(axis=1), self.forward(X_train[:5000]).argmax(axis=1), average='macro')
+        return train_acc 
