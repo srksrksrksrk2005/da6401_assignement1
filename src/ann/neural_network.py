@@ -153,5 +153,5 @@ class NeuralNetwork:
                 iteration += 1  
             avg_loss = epoch_loss /  int(np.ceil(n_samples / batch_size))
             print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
-            train_acc = self.evaluate(X_train[:5000], y_train[:5000])[0]
+            train_acc = self.evaluate(X_train[:5000], y_train[:5000])
         return train_acc 
