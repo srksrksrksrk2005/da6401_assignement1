@@ -8,7 +8,6 @@ import numpy as np
 from .neural_layer import Linear
 from .activations import ReLU, Sigmoid, Tanh
 from .objective_functions import Cross_Entropy, MSE
-from sklearn.metrics import f1_score
 
 class NeuralNetwork:
 
@@ -79,6 +78,7 @@ class NeuralNetwork:
             - `grad_Ws[0]` is gradient for the last (output) layer weights,
             `grad_bs[0]` is gradient for the last layer biases, and so on.
         """
+        y_true = self._ensure_one_hot(y_true)
         self.loss.forward(logits, y_true)
         grad = self.loss.backward()
 
@@ -94,6 +94,15 @@ class NeuralNetwork:
         self.grad_W = grad_W
         self.grad_b = grad_b
         return grad_W, grad_b
+
+    def _ensure_one_hot(self, y):
+        y = np.asarray(y)
+        if y.ndim == 2:
+            return y
+        num_classes = self.layers[-1].b.shape[1]
+        one_hot = np.zeros((y.shape[0], num_classes))
+        one_hot[np.arange(y.shape[0]), y.astype(int)] = 1.0
+        return one_hot
 
 
     def get_weights(self):
@@ -118,7 +127,7 @@ class NeuralNetwork:
                 idx += 1
                 
     def evaluate(self, X, y):
-        
+        y = self._ensure_one_hot(y)
         logits  = self.forward(X)
         exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         probs = exp / np.sum(exp, axis=1, keepdims=True)
@@ -142,6 +151,7 @@ class NeuralNetwork:
             for i in range(0, n_samples, batch_size):
                 X_batch = X_train[i:i+batch_size]
                 y_batch = y_train[i:i+batch_size]
+                y_batch = self._ensure_one_hot(y_batch)
                 
                 logits  = self.forward(X_batch)
                 
