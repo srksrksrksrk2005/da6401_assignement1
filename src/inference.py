@@ -2,20 +2,6 @@
 Inference Script
 Evaluate trained models on test sets
 """
-import argparse
-import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score ,confusion_matrix
-from utils.data_loader import load_data
-from ann.neural_network import NeuralNetwork
-from ann.optimizers import SGD
-import json
-
-
-    
-"""
-Inference Script
-Evaluate trained models on test sets
-"""
 
 import argparse
 from ann.neural_network import NeuralNetwork
